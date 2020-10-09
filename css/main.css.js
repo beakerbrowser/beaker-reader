@@ -1,8 +1,8 @@
-import {css} from 'beaker://app-stdlib/vendor/lit-element/lit-element.js'
-import commonCSS from 'beaker://app-stdlib/css/common.css.js'
-import buttonsCSS from 'beaker://app-stdlib/css/buttons2.css.js'
-import tooltipCSS from 'beaker://app-stdlib/css/tooltip.css.js'
-import spinnerCSS from 'beaker://app-stdlib/css/com/spinner.css.js'
+import {css} from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-element.js'
+import commonCSS from '/vendor/beaker-app-stdlib/css/common.css.js'
+import buttonsCSS from '/vendor/beaker-app-stdlib/css/buttons2.css.js'
+import tooltipCSS from '/vendor/beaker-app-stdlib/css/tooltip.css.js'
+import spinnerCSS from '/vendor/beaker-app-stdlib/css/com/spinner.css.js'
 
 const cssStr = css`
 ${commonCSS}
@@ -62,6 +62,15 @@ nav {
 .empty h3 {
   font-size: 15px;
   margin-top: 25px;
+}
+
+.empty .sign-in {
+  font-size: 22px;
+  margin-top: 12px;
+}
+
+.empty .sign-in button {
+  font-size: 20px;
 }
 
 .empty .suggested-sites {

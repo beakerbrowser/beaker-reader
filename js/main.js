@@ -1,10 +1,9 @@
-import { LitElement, html } from 'beaker://app-stdlib/vendor/lit-element/lit-element.js'
-import { repeat } from 'beaker://app-stdlib/vendor/lit-element/lit-html/directives/repeat.js'
-import * as QP from './lib/qp.js'
-import * as contextMenu from 'beaker://app-stdlib/js/com/context-menu.js'
-import { pluralize, getOrigin } from 'beaker://app-stdlib/js/strings.js'
+import { LitElement, html } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-element.js'
+import { repeat } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-html/directives/repeat.js'
+import * as contextMenu from '/vendor/beaker-app-stdlib/js/com/context-menu.js'
+import { getAvailableName } from '/vendor/beaker-app-stdlib/js/fs.js'
+import { pluralize, getOrigin, createResourceSlug } from '/vendor/beaker-app-stdlib/js/strings.js'
 import css from '../css/main.css.js'
-import './com/indexer-state.js'
 import './com/blog-feed.js'
 import './com/blogpost-view.js'
 import './com/blogpost-composer.js'
@@ -12,6 +11,7 @@ import './com/blogpost-composer.js'
 class ReaderApp extends LitElement {
   static get properties () {
     return {
+      session: {type: Object},
       profile: {type: Object},
       suggestedSites: {type: Array},
       composerMode: {type: Boolean},
@@ -25,6 +25,7 @@ class ReaderApp extends LitElement {
 
   constructor () {
     super()
+    this.session = undefined
     this.profile = undefined
     this.suggestedSites = undefined
     this.composerMode = false
@@ -45,16 +46,23 @@ class ReaderApp extends LitElement {
   }
 
   async load () {
+    if (!this.session) {
+      this.session = await beaker.session.get()
+    }
+    if (!this.session) {
+      return this.requestUpdate()
+    }
+    this.profile = this.session.user
     if (this.shadowRoot.querySelector('beaker-blog-feed')) {
       this.shadowRoot.querySelector('beaker-blog-feed').load()
     }
-    this.profile = await beaker.browser.getProfile()
   }
 
   async loadSuggestions () {
+    if (!this.session) return
     const getSite = async (url) => {
       let {site} = await beaker.index.gql(`
-        query Site($url: String!) {
+        query Site ($url: String!) {
           site(url: $url) {
             url
             title
@@ -65,14 +73,17 @@ class ReaderApp extends LitElement {
       `, {url})
       return site
     }
-    let {allSubscriptions} = await beaker.index.gql(`
-      query {
+    let {allSubscriptions, mySubscriptions} = await beaker.index.gql(`
+      query Subs ($origin: String!) {
         allSubscriptions: records(paths: ["/subscriptions/*.goto"] limit: 100 sort: crtime reverse: true) {
           metadata
         }
+        mySubscriptions: records(paths: ["/subscriptions/*.goto"] origins: [$origin]) {
+          metadata
+        }
       }
-    `)
-    var currentSubs = new Set((await beaker.subscriptions.list()).map(source => (getOrigin(source.href))))
+    `, {origin: this.profile.url})
+    var currentSubs = new Set(mySubscriptions.map(sub => (getOrigin(sub.metadata.href))))
     currentSubs.add(getOrigin(this.profile.url))
     var candidates = allSubscriptions.filter(sub => !currentSubs.has((getOrigin(sub.metadata.href))))
     var suggestedSiteUrls = candidates.reduce((acc, candidate) => {
@@ -101,17 +112,12 @@ class ReaderApp extends LitElement {
     this.suggestedSites = suggestedSites.slice(0, 12)
   }
 
-  // async setCurrentView (view) {
-  //   this.currentPost = view
-  //   QP.setParams({view})
-  // }
-
   // rendering
   // =
 
   render () {
     return html`
-      <link rel="stylesheet" href="beaker://assets/font-awesome.css">
+      <link rel="stylesheet" href="/vendor/beaker-app-stdlib/css/fontawesome.css">
       <nav>
         <div class="brand">
           <h1>Beaker Reader</h1>
@@ -120,7 +126,9 @@ class ReaderApp extends LitElement {
             <span class="fas fa-edit"></span>
           </button>
         </div>
-        <beaker-blog-feed current=${this.currentPost?.url} @view-post=${this.onViewPost}></beaker-blog-feed>
+        ${this.session ? html`
+          <beaker-blog-feed current=${this.currentPost?.url} @view-post=${this.onViewPost}></beaker-blog-feed>
+        ` : ''}
       </nav>
       <main>
         ${this.composerMode ? html`
@@ -137,6 +145,11 @@ class ReaderApp extends LitElement {
           <div class="empty">
             <h2>Beaker Reader</h2>
             <p>Read and publish blog posts on your network</p>
+            ${!this.session ? html`
+              <p class="sign-in">
+                <button class="primary" @click=${this.onClickSignin}>Sign In</button> to get started
+              </p>
+            ` : ''}
             ${this.suggestedSites?.length > 0 ? html`
               <h3>Suggested Sites</h3>
               <section class="suggested-sites">
@@ -244,15 +257,35 @@ class ReaderApp extends LitElement {
     e.preventDefault()
     site.subscribed = true
     this.requestUpdate()
-    await beaker.subscriptions.add({
+
+    var drive = beaker.hyperdrive.drive(this.profile.url)
+    var slug = createResourceSlug(site.url, site.title)
+    var filename = await getAvailableName('/subscriptions', slug, drive, 'goto') // avoid collisions
+    await drive.writeFile(`/subscriptions/${filename}`, '', {metadata: {
       href: site.url,
-      title: site.title,
-      site: this.profile.url
-    })
+      title: site.title
+    }})
     // wait 1s then replace/remove the suggestion
     setTimeout(() => {
       this.suggestedSites = this.suggestedSites.filter(s => s !== site)
     }, 1e3)
+  }
+
+  async onClickSignin () {
+    await beaker.session.request({
+      permissions: {
+        publicFiles: [
+          {path: '/subscriptions/*.goto', access: 'write'},
+          {path: '/blog/*.md', access: 'write'},
+          {path: '/comments/*.md', access: 'write'},
+          {path: '/votes/*.goto', access: 'write'}
+        ],
+        privateFiles: [
+          {path: '/blog/*.md', access: 'write'}
+        ]
+      }
+    })
+    location.reload()
   }
 }
 

@@ -1,10 +1,10 @@
 /* globals beaker monaco */
-import { LitElement, html } from 'beaker://app-stdlib/vendor/lit-element/lit-element.js'
-import { unsafeHTML } from 'beaker://app-stdlib/vendor/lit-element/lit-html/directives/unsafe-html.js'
-import { joinPath, toNiceUrl } from 'beaker://app-stdlib/js/strings.js'
-import { getAvailableName } from 'beaker://app-stdlib/js/fs.js'
-import registerSuggestions from 'beaker://editor/js/com/suggestions.js'
-import * as toast from 'beaker://app-stdlib/js/com/toast.js'
+import { LitElement, html } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-element.js'
+import { unsafeHTML } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-html/directives/unsafe-html.js'
+import { joinPath } from '/vendor/beaker-app-stdlib/js/strings.js'
+import { getAvailableName } from '/vendor/beaker-app-stdlib/js/fs.js'
+import registerSuggestions from '/vendor/beaker-app-stdlib/js/vs/suggestions.js'
+import * as toast from '/vendor/beaker-app-stdlib/js/com/toast.js'
 import css from '../../css/com/blogpost-composer.css.js'
 
 class BlogpostComposer extends LitElement {
@@ -49,7 +49,7 @@ class BlogpostComposer extends LitElement {
 
   async createEditor () {
     return new Promise((resolve, reject) => {
-      window.require.config({ baseUrl: 'beaker://assets/' })
+      window.require.config({baseUrl: '/vendor/beaker-app-stdlib/js/'})
       window.require(['vs/editor/editor.main'], () => {
         registerSuggestions()
         var isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -124,8 +124,8 @@ class BlogpostComposer extends LitElement {
       >${label}</a>
     `
     return html`
-      <link rel="stylesheet" href="beaker://assets/font-awesome.css">
-      <link rel="stylesheet" href="beaker://assets/vs/editor/editor.main.css">
+      <link rel="stylesheet" href="/vendor/beaker-app-stdlib/css/fontawesome.css">
+      <link rel="stylesheet" href="/vendor/beaker-app-stdlib/js/vs/editor/editor.main.css">
       <form @submit=${this.onPublish}>
         <div class="actions">
           ${this.isDraft ? html`

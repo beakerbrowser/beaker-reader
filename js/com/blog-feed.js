@@ -1,7 +1,7 @@
-import { LitElement, html } from 'beaker://app-stdlib/vendor/lit-element/lit-element.js'
-import { repeat } from 'beaker://app-stdlib/vendor/lit-element/lit-html/directives/repeat.js'
+import { LitElement, html } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-element.js'
+import { repeat } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-html/directives/repeat.js'
 import css from '../../css/com/blog-feed.css.js'
-import { emit } from 'beaker://app-stdlib/js/dom.js'
+import { emit } from '/vendor/beaker-app-stdlib/js/dom.js'
 import { isRead, markRead } from '../lib/is-read.js'
 
 const datefmt = new Intl.DateTimeFormat('default', {month: 'short', day: 'numeric', year: 'numeric'})
@@ -57,7 +57,7 @@ class BlogFeed extends LitElement {
       return html`<div class="loading"><span class="spinner"></span></div>`
     }
     return html`
-      <link rel="stylesheet" href="beaker://assets/font-awesome.css">
+      <link rel="stylesheet" href="/vendor/beaker-app-stdlib/css/fontawesome.css">
       <div class="posts">
         ${repeat(this.posts, post => html`
           <div

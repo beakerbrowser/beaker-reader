@@ -1,6 +1,6 @@
-import { LitElement, html } from 'beaker://app-stdlib/vendor/lit-element/lit-element.js'
-import { emit } from 'beaker://app-stdlib/js/dom.js'
-import 'beaker://app-stdlib/js/com/record-thread.js'
+import { LitElement, html } from '/vendor/beaker-app-stdlib/vendor/lit-element/lit-element.js'
+import { emit } from '/vendor/beaker-app-stdlib/js/dom.js'
+import '/vendor/beaker-app-stdlib/js/com/record-thread.js'
 import css from '../../css/com/blogpost-view.css.js'
 
 class BlogpostView extends LitElement {
@@ -28,7 +28,7 @@ class BlogpostView extends LitElement {
     return html`
       <div class="postmeta">
         <a class="thumb" href=${this.post.site.url} target="_blank">
-          <img src="asset:thumb:${this.post.site.url}">
+          <img src="${this.post.site.url}/thumb">
         </a>
         <a class="author" href=${this.post.site.url} target="_blank">
           ${this.post.site.title}
