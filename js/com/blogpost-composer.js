@@ -5,6 +5,7 @@ import { joinPath } from '/vendor/beaker-app-stdlib/js/strings.js'
 import { getAvailableName } from '/vendor/beaker-app-stdlib/js/fs.js'
 import registerSuggestions from '/vendor/beaker-app-stdlib/js/vs/suggestions.js'
 import * as toast from '/vendor/beaker-app-stdlib/js/com/toast.js'
+import * as contextMenu from '/vendor/beaker-app-stdlib/js/com/context-menu.js'
 import css from '../../css/com/blogpost-composer.css.js'
 
 class BlogpostComposer extends LitElement {
@@ -214,31 +215,39 @@ class BlogpostComposer extends LitElement {
   }
 
   async onContextmenu (e) {
-    var choice = await beaker.browser.showContextMenu([
-      {id: 'cut', label: 'Cut'},
-      {id: 'copy', label: 'Copy'},
-      {id: 'paste', label: 'Paste'},
-      {type: 'separator'},
-      {id: 'selectAll', label: 'Select All'},
-      {type: 'separator'},
-      {id: 'undo', label: 'Undo'},
-      {id: 'redo', label: 'Redo'},
-    ])
-    switch (choice) {
-      case 'cut':
-      case 'copy':
-      case 'paste':
-        this.editor.focus()
-        document.execCommand(choice)
-        break
-      case 'selectAll':
-        this.editor.setSelection(this.editor.getModel().getFullModelRange())
-        break
-      case 'undo':
-      case 'redo':
-        this.editor.trigger('contextmenu', choice)
-        break
-    }
+    e.preventDefault()
+    e.stopPropagation()
+    contextMenu.create({
+      x: e.clientX,
+      y: e.clientY,
+      noBorders: true,
+      style: `padding: 6px 0`,
+      items: [
+        {label: 'Cut', click: () => {
+          this.editor.focus()
+          document.execCommand('cut')
+        }},
+        {label: 'Copy', click: () => {
+          this.editor.focus()
+          document.execCommand('copy')
+        }},
+        {label: 'Paste', click: () => {
+          this.editor.focus()
+          document.execCommand('paste')
+        }},
+        '-',
+        {label: 'Select All', click: () => {
+          this.editor.setSelection(this.editor.getModel().getFullModelRange())
+        }},
+        '-',
+        {label: 'Undo', click: () => {
+          this.editor.trigger('contextmenu', 'undo')
+        }},
+        {label: 'Redo', click: () => {
+          this.editor.trigger('contextmenu', 'redo')
+        }},
+      ]
+    })
   }
 
   async onDelete (e) {
